@@ -1,5 +1,7 @@
-../.cache/
-../build/
-../dist/
-../postdoc.egg-info/
+.cache/
+build/
+dist/
+postdoc.egg-info/
 
+__pycache__/
+*.py[cod]
