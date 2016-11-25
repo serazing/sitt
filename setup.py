@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(name='sitt',
       version='0.1',
-      description='Utilies used during my sitt at LEGOS',
+      description='Code used for the project SWOT In The Tropics',
       author='Guillaume SERAZIN',
       author_email='guillaume.serazin@legos.obs-mip.fr',
       packages=['sitt'],
