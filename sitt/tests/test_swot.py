@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from postdoc import swot
+from sitt import swot
 import cartopy.crs as ccrs
 
 def test_add_swot_swath():
