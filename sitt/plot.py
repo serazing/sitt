@@ -1,8 +1,12 @@
-
 # Numpy
 import numpy as np
 # Matplotlib
 import matplotlib.pyplot as plt
+import cmocean
+# Cartopy
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+import cartopy.feature as cfeature
+
 
 def spectrum_plot(x, y, ax=None, **kwargs):
 	"""
@@ -76,3 +80,52 @@ def spectrum_plot(x, y, ax=None, **kwargs):
 		ax.twiny.set_xticklabels(new_minor_ticklabels, minor=True,
 		                           rotation=60, fontsize=12)
 	ax.grid(True, which='both')
+
+
+def nice_map(ax=None, title=''):
+	"""
+	Make a nice map with gridlines and coordinates
+
+	Parameters
+	----------
+	ax: matplotlib axes object, optional
+		If None, uses the current axis
+	title: str, optional
+		Title of the plot
+	"""
+	if ax is None:
+		ax = plt.gca()
+	land = cfeature.GSHHSFeature(scale='intermediate', levels=[1], facecolor=cfeature.COLORS['land'])
+	ax.add_feature(land)
+	ax.set_title(title)
+	gl = ax.gridlines(draw_labels=True)
+	gl.xlabels_top = False
+	gl.ylabels_right = False
+	gl.xformatter = LONGITUDE_FORMATTER
+	gl.yformatter = LATITUDE_FORMATTER
+	plt.tight_layout()
+
+
+def hovmoller(data, ax=None, title='', xlim=None, ylim=None, **kwargs):
+	"""
+	Parameters
+	---------
+	data: DataArray
+		Must be 2 dimensional
+	ax: matplotlib axes object, optional
+		If None, uses the current axis
+	title: str, optional
+		Title of the plot
+	**kwargs:
+	    Keywords arguments used in `xarray.plot.pcolormesh`
+	"""
+	if ax is None:
+		ax = plt.gca()
+	cmap = cmocean.cm.balance
+	cmap.set_bad('k',1.)
+	data.plot.pcolormesh(ax=ax, cmap=cmap, **kwargs)
+	ax.set_title(title)
+	if xlim is not None:
+		ax.set_xlim(xlim)
+	if ylim is not None:
+		ax.set_ylim(ylim)

@@ -1,7 +1,8 @@
 .cache/
+.idea/
 build/
 dist/
-postdoc.egg-info/
+sitt.egg-info/
 
 __pycache__/
 *.py[cod]
