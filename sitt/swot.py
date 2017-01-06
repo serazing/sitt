@@ -6,10 +6,13 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 # Codecs
 import codecs
-# Geometry
-import shapely.geometry as sgeom
+# Os
+import os
 
-def add_swot_swath(kml_file, swath=True, nadir=False, pass_number=6, ax=None):
+package_directory = os.path.dirname(os.path.abspath(__file__))
+
+
+def add_swot_swath(swath=True, nadir=False, pass_number=6, ax=None):
 	"""Add the SWOT swath to the current or precised axes
 
 	Parameters
@@ -25,9 +28,10 @@ def add_swot_swath(kml_file, swath=True, nadir=False, pass_number=6, ax=None):
 	ax: matplotlib axes, optional
 		The axes object onto which add the SWOT path
 	"""
-	if ax == None:
-		ax = plt.subplot(1, 1, 1, projection=ccrs.PlateCarree())
-	f = codecs.open(kml_file, encoding='Latin-1')
+	if ax is None:
+		ax = plt.gca()
+	f = codecs.open(os.path.join(package_directory, 'data', 'SWOT_CalVal_june2015_Swath_10_60.kml'),
+	                encoding='Latin-1')
 	doc = f.read()
 	doc_unicode = doc.encode("UTF-8")
 	k = kml.KML()

@@ -1,13 +1,23 @@
 import xarray as xr
 import glob
-
+import ipywidgets as ipyw
+from . import plot
 
 class Nemo(object):
 
-	def __init__(self, path, decode_times=True):
+	def __init__(self, path, decode_times=True, chunks=None):
 		"""
 		Build and read a Nemo simulation under `xarray.DataSet` objects. The files
 		 'coordinates.nc', 'mask.nc', 'mesh_hgr.nc' and 'mesh_zgr.nc' are required.
+
+		Parameters
+		----------
+		path: str
+			Root path of the simulation
+		decode_times: bool, optional
+			See xarray.Dataset
+        chunks : int, tuple or dict, optional
+            Chunk sizes along each dimension, e.g., ``5``, ``(5, 5)`` or ``{'x': 5, 'y': 5}``
 		"""
 		try:
 			self.coordinates = (xr.open_dataset(path + "/coordinates.nc", decode_times=False).
@@ -40,36 +50,50 @@ class Nemo(object):
 		if glob.glob(path + "/*/*gridT.nc"):
 			self.gridT = (xr.open_mfdataset(path + "/*/*gridT.nc",
 			                                decode_times=decode_times,
-			                                drop_variables=('nav_lon', 'nav_lat')).
+			                                drop_variables=('nav_lon', 'nav_lat'),
+			                                chunks=chunks).
 			              assign_coords(nav_lon=self.coordinates.nav_lon,
-			                            nav_lat=self.coordinates.nav_lat).
-			              assign(mask=self.mask.tmask).
-			              set_coords('nav_lev')
+			                            nav_lat=self.coordinates.nav_lat)
 			              )
 		if glob.glob(path + "/*/*gridU.nc"):
 			self.gridU = (xr.open_mfdataset(path + "/*/*gridU.nc",
-			                          decode_times=decode_times,
-			                          drop_variables=('nav_lon', 'nav_lat')).
+			                                decode_times=decode_times,
+			                                drop_variables=('nav_lon', 'nav_lat'),
+			                                chunks=chunks).
 			              assign_coords(nav_lon=self.coordinates.nav_lon,
-			                            nav_lat=self.coordinates.nav_lat).
-			              assign(mask=self.mask.umask).
-			              set_coords('nav_lev')
+			                            nav_lat=self.coordinates.nav_lat)
 			              )
 		if glob.glob(path + "/*/*gridV.nc"):
 			self.gridV = (xr.open_mfdataset(path + "/*/*gridV.nc",
-			                          decode_times=decode_times,
-			                          drop_variables=('nav_lon', 'nav_lat')).
+			                                decode_times=decode_times,
+			                                drop_variables=('nav_lon', 'nav_lat'),
+			                                chunks=chunks).
 			              assign_coords(nav_lon=self.coordinates.nav_lon,
-			                            nav_lat=self.coordinates.nav_lat).
-			              assign(mask=self.mask.vmask).
-			              set_coords('nav_lev')
+			                            nav_lat=self.coordinates.nav_lat)
 			              )
 		if glob.glob(path + "/*/*gridW.nc"):
 			self.gridW = (xr.open_mfdataset(path + "/*/*gridW.nc",
-			                          decode_times=decode_times,
-			                          drop_variables=('nav_lon', 'nav_lat')).
+			                                decode_times=decode_times,
+			                                drop_variables=('nav_lon', 'nav_lat'),
+			                                chunks=chunks).
 			              assign_coords(nav_lon=self.coordinates.nav_lon,
-			                            nav_lat=self.coordinates.nav_lat).
-			              assign(mask=self.mask.fmask).
-			              set_coords('nav_lev')
+			                            nav_lat=self.coordinates.nav_lat)
 			              )
+
+
+class Swot(object):
+
+	def __init__(self, path):
+		try:
+			self.swath = (xr.open_dataset(path + "/coordinates.nc", decode_times=False).
+			                    squeeze().drop(('time', 'z', 'nav_lev')).
+			                    set_coords(('nav_lon', 'nav_lat'))
+			                    )
+		except:
+			raise RuntimeError("Impossible to find coordinates.nc")
+
+		if glob.glob(path + "/*_swot014_c*.nc"):
+			self.swath = (xr.open_dataset(path + "/*_swot014_c*.nc", decode_times=False).
+			                    squeeze().drop(('time', 'z', 'nav_lev')).
+			                    set_coords(('nav_lon', 'nav_lat'))
+			                    )
