@@ -12,7 +12,7 @@ import os
 package_directory = os.path.dirname(os.path.abspath(__file__))
 
 
-def add_swot_swath(swath=True, nadir=False, pass_number=6, ax=None):
+def add_swot_swath(swath=True, nadir=False, pass_number=6, ax=None, **kwargs):
 	"""Add the SWOT swath to the current or precised axes
 
 	Parameters
@@ -46,4 +46,4 @@ def add_swot_swath(swath=True, nadir=False, pass_number=6, ax=None):
 	if nadir:
 		ax.add_geometries([fnadir.geometry], ccrs.PlateCarree(), edgecolor='red', color='none')
 	if swath:	
-		ax.add_geometries([fswath.geometry], ccrs.PlateCarree(), facecolor='None', edgecolor='black')
+		ax.add_geometries([fswath.geometry], ccrs.PlateCarree(), **kwargs)
