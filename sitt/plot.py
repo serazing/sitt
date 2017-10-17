@@ -11,7 +11,8 @@ import cartopy.crs as ccrs
 import ipywidgets as ipyw
 from IPython.display import display
 
-def add_map(lon_min=-180, lon_max=180, lat_min=-90, lat_max=90, ax=None):
+def add_map(lon_min=-180, lon_max=180, lat_min=-90, lat_max=90,
+            central_longitude=0., scale='auto', ax=None):
     """
     Add the map to the existing plot using cartopy
 
@@ -24,7 +25,11 @@ def add_map(lon_min=-180, lon_max=180, lat_min=-90, lat_max=90, ax=None):
     lat_min : float, optional
         Southern boundary, default is -90
     lat_max : float, optional
-        Northern boundaryr, default is 90
+        Northern boundary, default is 90
+    central_longitude : float, optional
+        Central longitude, default is 180
+    scale : {‘auto’, ‘coarse’, ‘low’, ‘intermediate’, ‘high, ‘full’}, optional
+        The map scale, default is 'auto'
     ax : GeoAxes, optional
         A new GeoAxes will be created if None
 
@@ -38,13 +43,16 @@ def add_map(lon_min=-180, lon_max=180, lat_min=-90, lat_max=90, ax=None):
     from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
     extent = (lon_min, lon_max, lat_min, lat_max)
     if ax is None:
-        ax = plt.subplot(1, 1, 1, projection=ccrs.PlateCarree())
+        ax = plt.subplot(1, 1, 1,
+                         projection=ccrs.PlateCarree(
+	                                       central_longitude=central_longitude))
     ax.set_extent(extent)
-    land = cfeature.GSHHSFeature(scale='intermediate',
+    land = cfeature.GSHHSFeature(scale=scale,
                                  levels=[1],
                                  facecolor=cfeature.COLORS['land'])
     ax.add_feature(land)
-    gl = ax.gridlines(draw_labels=True)
+    gl = ax.gridlines(draw_labels=True, linestyle=':', color='black',
+                      alpha=0.5)
     gl.xlabels_top = False
     gl.ylabels_right = False
     gl.xformatter = LONGITUDE_FORMATTER

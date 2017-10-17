@@ -3,7 +3,12 @@ import glob
 import ipywidgets as ipyw
 from . import plot
 
-class Nemo(object):
+class Simulation(object):
+
+	def __init__(self):
+		pass
+
+class Nemo(Simulation):
 
 	def __init__(self, path, decode_times=True, chunks=None):
 		"""
@@ -80,8 +85,14 @@ class Nemo(object):
 			                            nav_lat=self.coordinates.nav_lat)
 			              )
 
+class Ensemble(Simulation):
 
-class Swot(object):
+	def __init__(self, simulations):
+		#TODO: write this function
+		pass
+
+
+class Swot(Simulation):
 
 	def __init__(self, path):
 		try:
