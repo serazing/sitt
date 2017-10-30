@@ -8,9 +8,10 @@ class Simulation(object):
 	def __init__(self):
 		pass
 
-class Nemo(Simulation):
+class NemoSim(Simulation):
 
-	def __init__(self, path, decode_times=True, chunks=None):
+	def __init__(self, path, grid_path, decode_times=True,
+	             chunks=None, autoclose=False):
 		"""
 		Build and read a Nemo simulation under `xarray.DataSet` objects. The files
 		 'coordinates.nc', 'mask.nc', 'mesh_hgr.nc' and 'mesh_zgr.nc' are required.
@@ -22,75 +23,91 @@ class Nemo(Simulation):
 		decode_times: bool, optional
 			See xarray.Dataset
         chunks : int, tuple or dict, optional
-            Chunk sizes along each dimension, e.g., ``5``, ``(5, 5)`` or ``{'x': 5, 'y': 5}``
+            Chunk sizes along each dimension, e.g., ``5``, ``(5, 5)`` or
+            ``{'x': 5, 'y': 5}``
 		"""
-		try:
-			self.coordinates = (xr.open_dataset(path + "/coordinates.nc", decode_times=False).
+		self.open_grid_files(grid_path)
+		def open_files(filenames):
+			ds = (xr.open_mfdataset(filenames,
+			                        decode_times=decode_times,
+			                        autoclose=autoclose,
+			                        drop_variables=('nav_lon', 'nav_lat'),
+			                        chunks=chunks).
+			      assign_coords(nav_lon=self.mask.nav_lon,
+			                    nav_lat=self.mask.nav_lat)
+			     )
+			return ds
+		if glob.glob(path + "/*/*/*gridT.nc"):
+			self.gridT = open_files(path + "/*/*/*gridT.nc")
+		if glob.glob(path + "/*/*/*gridU.nc"):
+			self.gridU = open_files(path + "/*/*/*gridU.nc")
+		if glob.glob(path + "/*/*/*gridV.nc"):
+			self.gridV = open_files(path + "/*/*/*gridV.nc")
+		if glob.glob(path + "/*/*/*gridW.nc"):
+			self.gridW = open_files(path + "/*/*/*gridW.nc")
+		if glob.glob(path + "/*/*/*flxT.nc"):
+			self.flxT = open_files(path + "/*/*/*flxT.nc")
+
+	def open_grid_files(self, grid_path):
+		if glob.glob(grid_path + "/*coordinates.nc"):
+			self.coordinates = (xr.open_mfdataset(grid_path +
+			                                      "/*coordinates.nc",
+			                                      decode_times=False).
 			                    squeeze().drop(('time', 'z', 'nav_lev')).
 			                    set_coords(('nav_lon', 'nav_lat'))
 			                    )
-		except:
-			raise RuntimeError("Impossible to find coordinates.nc")
-		try:
-			self.mask = (xr.open_dataset(path + "/mask.nc", decode_times=False).
-			             squeeze().drop(('t', 'time_counter')).
+
+		if glob.glob(grid_path + "/*mask.nc"):
+			self.mask = (xr.open_mfdataset(grid_path + "/*mask.nc",
+			                               decode_times=False).
+			             squeeze().
 			             set_coords(('nav_lon', 'nav_lat', 'nav_lev'))
 			             )
-		except:
-			raise RuntimeError("Impossible to find mask.nc")
-		try:
-			self.mesh_hgr = (xr.open_dataset(path + "/mesh_hgr.nc", decode_times=False).
-			                 squeeze().drop(('t', 'time_counter', 'z', 'nav_lev')).
+
+		if glob.glob(grid_path + "/*mesh_hgr.nc"):
+			self.mesh_hgr = (xr.open_mfdataset(grid_path + "/*mesh_hgr.nc",
+			                                   decode_times=False).
+			                 squeeze().drop(('nav_lev')).
 			                 set_coords(('nav_lon', 'nav_lat'))
 			                 )
-		except:
-			raise RuntimeError("Impossible to find mesh_hgr.nc")
-		try:
-			self.mesh_zgr = (xr.open_dataset(path + "/mesh_zgr.nc", decode_times=False).
-			                 squeeze().drop(('t', 'time_counter')).
+		if glob.glob(grid_path + "/*mesh_zgr.nc"):
+			self.mesh_zgr = (xr.open_mfdataset(grid_path + "/*mesh_zgr.nc",
+			                                   decode_times=False).
+			                 squeeze().
 			                 set_coords(('nav_lon', 'nav_lat', 'nav_lev'))
 			                 )
+
+
+class NemoEns(NemoSim):
+
+	def __init__(self, path, grid_path, chunks=None):
+		simlist = []
+		self.open_grid_files(grid_path)
+		for simpath in glob.glob(path):
+			simlist.append(NemoSim(simpath, grid_path=grid_path,
+			                                chunks=chunks,
+			                                autoclose=True)
+			               )
+		try:
+			self.gridT = xr.concat([sim.gridT for sim in simlist], dim='n')
 		except:
-			raise RuntimeError("Impossible to find mesh_zgr.nc")
-		if glob.glob(path + "/*/*gridT.nc"):
-			self.gridT = (xr.open_mfdataset(path + "/*/*gridT.nc",
-			                                decode_times=decode_times,
-			                                drop_variables=('nav_lon', 'nav_lat'),
-			                                chunks=chunks).
-			              assign_coords(nav_lon=self.coordinates.nav_lon,
-			                            nav_lat=self.coordinates.nav_lat)
-			              )
-		if glob.glob(path + "/*/*gridU.nc"):
-			self.gridU = (xr.open_mfdataset(path + "/*/*gridU.nc",
-			                                decode_times=decode_times,
-			                                drop_variables=('nav_lon', 'nav_lat'),
-			                                chunks=chunks).
-			              assign_coords(nav_lon=self.coordinates.nav_lon,
-			                            nav_lat=self.coordinates.nav_lat)
-			              )
-		if glob.glob(path + "/*/*gridV.nc"):
-			self.gridV = (xr.open_mfdataset(path + "/*/*gridV.nc",
-			                                decode_times=decode_times,
-			                                drop_variables=('nav_lon', 'nav_lat'),
-			                                chunks=chunks).
-			              assign_coords(nav_lon=self.coordinates.nav_lon,
-			                            nav_lat=self.coordinates.nav_lat)
-			              )
-		if glob.glob(path + "/*/*gridW.nc"):
-			self.gridW = (xr.open_mfdataset(path + "/*/*gridW.nc",
-			                                decode_times=decode_times,
-			                                drop_variables=('nav_lon', 'nav_lat'),
-			                                chunks=chunks).
-			              assign_coords(nav_lon=self.coordinates.nav_lon,
-			                            nav_lat=self.coordinates.nav_lat)
-			              )
-
-class Ensemble(Simulation):
-
-	def __init__(self, simulations):
-		#TODO: write this function
-		pass
-
+			pass
+		try:
+			self.gridU = xr.concat([sim.gridU for sim in simlist], dim='n')
+		except:
+			pass
+		try:
+			self.gridV = xr.concat([sim.gridV for sim in simlist], dim='n')
+		except:
+			pass
+		try:
+			self.gridW = xr.concat([sim.gridW for sim in simlist], dim='n')
+		except:
+			pass
+		try:
+			self.flxT = xr.concat([sim.flxT for sim in simlist], dim='n')
+		except:
+			pass
 
 class Swot(Simulation):
 
